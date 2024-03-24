@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Docker
+.docker
+
+
+# Python
+socialmedia-api/__pycache__/
+socialmedia-api/*/__pycache__/
+socialmedia-api/*/*/__pycache__/
+socialmedia-api/*/*/*/__pycache__/
+.env/
+.venv/
+venv
