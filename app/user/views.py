@@ -19,9 +19,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
 
-    # queryset = User.objects.all()
-    # permission_classes = (AllowAny,)
-    print("Inside View")
     serializer_class = UserSerializer
 
 
