@@ -13,6 +13,20 @@ from django.contrib.auth.models import (
 class UserManager(BaseUserManager):
     """Manager for users."""
 
+    # @classmethod
+    def normalize_email(cls, email):
+        """
+        Normalize the email address by lowercasing the domain part of it.
+        """
+        email = email or ""
+        try:
+            email_name, domain_part = email.strip().rsplit("@", 1)
+        except ValueError:
+            pass
+        else:
+            email = email_name.lower() + "@" + domain_part.lower()
+        return email
+
     def create_user(self, email, password=None, **extra_fields):
         """Create, save and return new user."""
         if not email:
