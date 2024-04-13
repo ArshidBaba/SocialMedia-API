@@ -14,7 +14,7 @@ class UserManager(BaseUserManager):
     """Manager for users."""
 
     # @classmethod
-    def normalize_email(cls, email):
+    def normalize_email(self, email):
         """
         Normalize the email address by lowercasing the domain part of it.
         """
@@ -56,3 +56,25 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
+
+
+class FriendRequest(models.Model):
+    """Friend Request in the system."""
+
+    sender = models.ForeignKey(
+        User, related_name="sender", on_delete=models.CASCADE, null=True
+    )
+    reciever = models.ForeignKey(
+        User, related_name="reciever", on_delete=models.CASCADE, null=True
+    )
+
+
+class Friend(models.Model):
+    """Friend relationship between two users."""
+
+    user1 = models.ForeignKey(
+        User, related_name="friend_1", on_delete=models.CASCADE, null=True
+    )
+    user2 = models.ForeignKey(
+        User, related_name="friend_2", on_delete=models.CASCADE, null=True
+    )
