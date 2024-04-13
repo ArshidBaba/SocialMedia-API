@@ -67,6 +67,7 @@ class FriendRequest(models.Model):
     reciever = models.ForeignKey(
         User, related_name="reciever", on_delete=models.CASCADE, null=True
     )
+    status = models.CharField(max_length=20, default="pending")
 
     def __str__(self):
         return f"{self.sender.name} to {self.reciever.name}"
