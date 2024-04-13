@@ -68,6 +68,9 @@ class FriendRequest(models.Model):
         User, related_name="reciever", on_delete=models.CASCADE, null=True
     )
 
+    def __str__(self):
+        return f"{self.sender.name} to {self.reciever.name}"
+
 
 class Friend(models.Model):
     """Friend relationship between two users."""
