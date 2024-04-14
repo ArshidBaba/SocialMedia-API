@@ -82,3 +82,6 @@ class Friend(models.Model):
     user2 = models.ForeignKey(
         User, related_name="friend_2", on_delete=models.CASCADE, null=True
     )
+
+    def __str__(self):
+        return f"{self.user1.name} is friends with {self.user2.name}"

@@ -14,6 +14,6 @@ app_name = "friend"
 
 urlpatterns = [
     path("", include(router.urls)),
-    # path("requests/", views.ListFriendRequestAPIView.as_view(), name="list"),
-    # path("request/", views.CreateFriendRequestAPIView.as_view(), name="create"),
+    path("accept/<int:pk>/", views.accept_friend_request, name="accept"),
+    path("friends/", views.list_friends, name="list-frineds"),
 ]
