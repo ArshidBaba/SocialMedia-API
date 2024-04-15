@@ -29,23 +29,39 @@ class FriendRequestCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FriendRequest
-        fields = ["sender", "reciever", "status"]
-        extra_kwargs = {
-            "sender": {"write_only": True},
-            "reciever": {"write_only": True},
-        }
+        fields = ["sender", "receiver", "status"]
+        # extra_kwargs = {
+        #     "sender": {"write_only": True},
+        #     "reciever": {"write_only": True},
+        # }
 
 
-class FriendSerializer(serializers.ModelSerializer):
+class FriendCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a friend."""
 
-    user2 = serializers.SerializerMethodField(read_only=True)
+    # user2 = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Friend
-        fields = ["id", "user2"]
+        fields = ["id", "user1", "user2"]
 
-    def get_user2(self, obj):
-        """Method to get the name of the user2"""
+    # def get_user2(self, obj):
+    #     """Method to get the name of the user2"""
+    #     name = obj.user2.name
+    #     return name
+
+
+class FriendListSerializer(serializers.ModelSerializer):
+    """Serializer for listing friends of an authenticated user"""
+
+    friend = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Friend
+        fields = ["id", "friend"]
+
+    def get_friend(self, obj):
+        """Returns the name of the friend"""
+
         name = obj.user2.name
         return name

@@ -23,7 +23,8 @@ from core.models import FriendRequest, User, Friend
 from .serializers import (
     FriendRequestSerializer,
     FriendRequestCreateSerializer,
-    FriendSerializer,
+    FriendListSerializer,
+    FriendCreateSerializer,
 )
 
 
@@ -48,26 +49,67 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 
         return self.serializer_class
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         """Create a new friend request"""
-
-        reciever = self.request.data["reciever"]
-        print(reciever)
-        print(self.request.user.id)
-        if reciever == self.request.user.id:
+        receiver = int(request.data["receiver"])
+        if receiver == int(request.user.id):
             raise ValidationError(
-                {"message": "The User cannot send a friend request to themself"}
+                {
+                    "message": "The User cannot send a friend request to themself",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
             )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        return Response(
+            {
+                "message": "Friend request sent successfully!",
+                "status": status.HTTP_201_CREATED,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
+
+    # def perform_create(self, serializer):
+    #     """Create a new friend request"""
+
+    #     reciever = int(self.request.data["reciever"])
+
+    #     if reciever == int(self.request.user.id):
+    #         raise ValidationError(
+    #             {
+    #                 "message": "The User cannot send a friend request to themself",
+    #                 "status": status.HTTP_400_BAD_REQUEST,
+    #             }
+    #         )
+    #     serializer.save(sender=self.request.user)
+    #     print("After Serilizer")
+    #     return Response(
+    #         {
+    #             "message": "Friend request sent successfully!",
+    #             "status": status.HTTP_201_CREATED,
+    #         },
+    #         status=status.HTTP_201_CREATED,
+    #     )
 
     def destroy(self, request, pk=None):
         """Reject a friend request"""
 
-        print("Inside Destroy")
         try:
             f_request = FriendRequest.objects.get(id=pk)
-        except:
-            raise Not
+        except FriendRequest.DoesNotExist:
+            return Response(
+                {
+                    "message": "The friend request with this ID does not exist.",
+                    "status": status.HTTP_404_NOT_FOUND,
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
         f_request.delete()
         return Response(
             {
@@ -82,20 +124,35 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 @authentication_classes([JWTAuthentication])
 @permission_classes([permissions.IsAuthenticated])
 @transaction.atomic
-def accept_friend_request(request, pk):
+def accept_friend_request(request):
     """Accepts a friend request from a user"""
-
+    print("before")
+    print(request.data)
+    # return Response("done")
     reciever = request.user
-    f_request = FriendRequest.objects.get(pk=pk)
+    print(reciever)
+    try:
+        f_request = FriendRequest.objects.get(pk=request.data["request_id"])
+        print("Inside Try")
+    except FriendRequest.DoesNotExist:
+        return Response(
+            {
+                "message": "The friend request with this ID does not exist.",
+                "status": status.HTTP_404_NOT_FOUND,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     data = {"user1": f_request.sender.id, "user2": reciever.id}
-    serializer = FriendSerializer(data=data)
+    serializer = FriendCreateSerializer(data=data)
     if serializer.is_valid():
+        print("Inside First Save")
         serializer.save()
 
     data2 = {"user1": reciever.id, "user2": f_request.sender.id}
-    serializer = FriendSerializer(data=data2)
+    serializer = FriendCreateSerializer(data=data2)
     if serializer.is_valid():
+        print("Inside Second Save")
         serializer.save()
     f_request.delete()
     return Response("Finish")
@@ -111,6 +168,6 @@ def list_friends(request):
 
     friends_query = Friend.objects.filter(user1=authenticated_user)
 
-    serializer = FriendSerializer(friends_query, many=True)
+    serializer = FriendListSerializer(friends_query, many=True)
 
     return Response(serializer.data)

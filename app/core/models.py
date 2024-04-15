@@ -64,13 +64,13 @@ class FriendRequest(models.Model):
     sender = models.ForeignKey(
         User, related_name="sender", on_delete=models.CASCADE, null=True
     )
-    reciever = models.ForeignKey(
-        User, related_name="reciever", on_delete=models.CASCADE, null=True
+    receiver = models.ForeignKey(
+        User, related_name="receiver", on_delete=models.CASCADE, null=True
     )
     status = models.CharField(max_length=20, default="pending")
 
     def __str__(self):
-        return f"{self.sender.name} to {self.reciever.name}"
+        return f"{self.sender.name} to {self.receiver.name}"
 
 
 class Friend(models.Model):
@@ -83,5 +83,5 @@ class Friend(models.Model):
         User, related_name="friend_2", on_delete=models.CASCADE, null=True
     )
 
-    def __str__(self):
-        return f"{self.user1.name} is friends with {self.user2.name}"
+    # def __str__(self):
+    #     return f"{self.user1.name} is friends with {self.user2.name}"
