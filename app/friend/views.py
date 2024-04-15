@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from rest_framework import viewsets
-from rest_framework import generics, authentication, permissions
+from rest_framework import permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
@@ -26,6 +26,7 @@ from .serializers import (
     FriendListSerializer,
     FriendCreateSerializer,
 )
+from .throttles import UserBasedCreateFriendRequestThrottle
 
 
 class FriendRequestViewSet(viewsets.ModelViewSet):
@@ -35,11 +36,12 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
     queryset = FriendRequest.objects.all()
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = []
 
     def get_queryset(self):
         """Retrieve friend requests for authenticated users."""
 
-        return self.queryset.filter(reciever=self.request.user.id)
+        return self.queryset.filter(receiver=self.request.user.id)
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -51,13 +53,55 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new friend request"""
+
         receiver = int(request.data["receiver"])
+
         if receiver == int(request.user.id):
             raise ValidationError(
                 {
                     "message": "The User cannot send a friend request to themself",
                     "status": status.HTTP_400_BAD_REQUEST,
                 }
+            )
+        f_request = FriendRequest.objects.filter(
+            receiver=receiver, sender=request.user.id
+        )
+
+        if f_request:
+            return Response(
+                {
+                    "message": "You have already sent a friend request to this user",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        f_request = FriendRequest.objects.filter(
+            receiver=request.user.id, sender=receiver
+        )
+        if f_request:
+            return Response(
+                {
+                    "message": "You already have a friend request from this user",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        friend = Friend.objects.filter(user1=request.user.id, user2=receiver)
+
+        if friend:
+            return Response(
+                {
+                    "message": "You are already friends with this user",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        throttle_instance = UserBasedCreateFriendRequestThrottle()
+
+        if not throttle_instance.allow_request(request, self):
+            return Response(
+                {"message": "Rate limit exceeded. Try again later."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
         serializer = self.get_serializer(data=request.data)
@@ -74,28 +118,6 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
-
-    # def perform_create(self, serializer):
-    #     """Create a new friend request"""
-
-    #     reciever = int(self.request.data["reciever"])
-
-    #     if reciever == int(self.request.user.id):
-    #         raise ValidationError(
-    #             {
-    #                 "message": "The User cannot send a friend request to themself",
-    #                 "status": status.HTTP_400_BAD_REQUEST,
-    #             }
-    #         )
-    #     serializer.save(sender=self.request.user)
-    #     print("After Serilizer")
-    #     return Response(
-    #         {
-    #             "message": "Friend request sent successfully!",
-    #             "status": status.HTTP_201_CREATED,
-    #         },
-    #         status=status.HTTP_201_CREATED,
-    #     )
 
     def destroy(self, request, pk=None):
         """Reject a friend request"""
@@ -126,14 +148,11 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 @transaction.atomic
 def accept_friend_request(request):
     """Accepts a friend request from a user"""
-    print("before")
-    print(request.data)
-    # return Response("done")
+
     reciever = request.user
-    print(reciever)
+
     try:
         f_request = FriendRequest.objects.get(pk=request.data["request_id"])
-        print("Inside Try")
     except FriendRequest.DoesNotExist:
         return Response(
             {
@@ -146,16 +165,20 @@ def accept_friend_request(request):
     data = {"user1": f_request.sender.id, "user2": reciever.id}
     serializer = FriendCreateSerializer(data=data)
     if serializer.is_valid():
-        print("Inside First Save")
         serializer.save()
 
     data2 = {"user1": reciever.id, "user2": f_request.sender.id}
     serializer = FriendCreateSerializer(data=data2)
     if serializer.is_valid():
-        print("Inside Second Save")
         serializer.save()
     f_request.delete()
-    return Response("Finish")
+    return Response(
+        {
+            "message": "Friend request accepted successfully!",
+            "status": status.HTTP_200_OK,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
@@ -170,4 +193,7 @@ def list_friends(request):
 
     serializer = FriendListSerializer(friends_query, many=True)
 
-    return Response(serializer.data)
+    return Response(
+        {"Friends": serializer.data, "status": status.HTTP_200_OK},
+        status=status.HTTP_200_OK,
+    )
