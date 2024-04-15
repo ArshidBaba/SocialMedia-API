@@ -83,5 +83,5 @@ class Friend(models.Model):
         User, related_name="friend_2", on_delete=models.CASCADE, null=True
     )
 
-    # def __str__(self):
-    #     return f"{self.user1.name} is friends with {self.user2.name}"
+    def __str__(self):
+        return f"{self.user1.name} is friends with {self.user2.name}"
