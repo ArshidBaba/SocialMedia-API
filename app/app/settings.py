@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "user",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    # "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -95,7 +96,9 @@ REST_FRAMEWORK = {
     #     "rest_framework_simplejwt.authentication.JWTAuthentication"
     # ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
