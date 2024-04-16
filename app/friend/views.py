@@ -5,6 +5,7 @@ Views for the Friends API.
 from django.db import transaction
 from django.db.models import Q
 
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.permissions import AllowAny
@@ -37,6 +38,7 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = []
+    # pagination_class = PageNumberPagination
 
     def get_queryset(self):
         """Retrieve friend requests for authenticated users."""
@@ -100,7 +102,7 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 
         if not throttle_instance.allow_request(request, self):
             return Response(
-                {"message": "Rate limit exceeded. Try again later."},
+                {"message": "Rate limit exceeded. Try again after 1 minute."},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 

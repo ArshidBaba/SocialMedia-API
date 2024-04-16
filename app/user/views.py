@@ -22,6 +22,7 @@ from user.serializers import (
     UserListSerializer,
 )
 from core.models import User
+from .pagination import MyPageNumberPagination
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -48,16 +49,6 @@ class ManageUserView(generics.RetrieveAPIView):
         return self.request.user
 
 
-@api_view(["GET"])
-@authentication_classes([JWTAuthentication])
-@permission_classes([permissions.IsAuthenticated])
-def list_users(request):
-    users = User.objects.all()
-    serializer = UserListSerializer(users, many=True)
-
-    return Response(serializer.data)
-
-
 class UserList(generics.ListAPIView):
     """User list in the system."""
 
@@ -65,9 +56,11 @@ class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "email"]
+    pagination_class = MyPageNumberPagination
 
     def get_queryset(self):
         """Retrieve and return list of users."""
-        users = User.objects.all()
+        # users = User.objects.all()
+        users = self.queryset.all()
 
         return users
