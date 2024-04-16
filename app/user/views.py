@@ -60,7 +60,6 @@ class UserList(generics.ListAPIView):
 
     def get_queryset(self):
         """Retrieve and return list of users."""
-        # users = User.objects.all()
-        users = self.queryset.all()
 
+        users = self.queryset.all()
         return users
