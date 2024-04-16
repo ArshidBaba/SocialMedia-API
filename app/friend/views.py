@@ -5,9 +5,9 @@ Views for the Friends API.
 from django.db import transaction
 from django.db.models import Q
 
+
 from rest_framework import viewsets
 from rest_framework import permissions
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
@@ -19,7 +19,7 @@ from rest_framework.serializers import ValidationError
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from core.models import FriendRequest, User, Friend
+from core.models import FriendRequest, Friend
 from .serializers import (
     FriendRequestSerializer,
     FriendRequestCreateSerializer,
@@ -100,7 +100,7 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
 
         if not throttle_instance.allow_request(request, self):
             return Response(
-                {"message": "Rate limit exceeded. Try again later."},
+                {"message": "Rate limit exceeded. Try again after 1 minute."},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 

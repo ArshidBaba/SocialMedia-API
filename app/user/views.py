@@ -2,10 +2,15 @@
 Views for the user API.
 """
 
+from rest_framework import filters
 from rest_framework import generics, authentication, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -17,6 +22,7 @@ from user.serializers import (
     UserListSerializer,
 )
 from core.models import User
+from .pagination import MyPageNumberPagination
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -31,7 +37,7 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
 
 
-class ManageUserView(generics.RetrieveUpdateAPIView):
+class ManageUserView(generics.RetrieveAPIView):
     """Manage the authenticated user."""
 
     serializer_class = UserSerializer
@@ -43,15 +49,17 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-@api_view(["GET"])
-def list_users(request):
-    users = User.objects.all()
-    serializer = UserListSerializer(users, many=True)
+class UserList(generics.ListAPIView):
+    """User list in the system."""
 
-    return Response(serializer.data)
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "email"]
+    pagination_class = MyPageNumberPagination
 
+    def get_queryset(self):
+        """Retrieve and return list of users."""
 
-# class MySpectacularAPIView(SpectacularAPIView):
-#     """Custom SpectacularAPIView."""
-
-#     authentication_classes = []
+        users = self.queryset.all()
+        return users
