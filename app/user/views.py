@@ -57,6 +57,8 @@ class UserList(generics.ListAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "email"]
     pagination_class = MyPageNumberPagination
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Retrieve and return list of users."""
